@@ -2,7 +2,7 @@
 import express from 'express'
 import exitHook from 'async-exit-hook'
 import { env } from '~/config/environment'
-import { APIs_v1} from '~/routes/v1'
+import { APIs_v1 } from '~/routes/v1'
 import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
 
 const START_SERVER = () => {
