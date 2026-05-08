@@ -6,7 +6,7 @@ const Router = express.Router()
 
 //Check APIs v1/status
 Router.get('/status', (req, res) => {
-  res.status(StatusCodes.OK).json({message: 'APIs V1 are ready to use'})
+  res.status(StatusCodes.OK).json({ message: 'APIs V1 are ready to use' })
 })
 
 //Board APIs
