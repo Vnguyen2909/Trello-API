@@ -6,7 +6,13 @@ import ApiError from '~/utils/ApiError'
 
 const createNew = async (req, res, next) => {
   const conrrectCondition = Joi.object({
-    title: Joi.string().required().min(3).max(50).trim().strict(),
+    title: Joi.string().required().min(3).max(50).trim().strict().messages({
+      'any.required': 'Title is required (2909ngv)',
+      'string.empty': 'Title is not allowed to be empty (2909ngv)',
+      'string.min': 'Title length must be at least 3 characters long (2909ngv)',
+      'string.max': 'Title length must be less than or equal to 5 characters long (2909ngv)',
+      'string.trim': 'Title must not have leading or trailing whitespace (2909ngv)'
+    }),
     description: Joi.string().required().min(3).max(256).trim().strict()
   })
 
