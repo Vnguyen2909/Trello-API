@@ -3,6 +3,7 @@
 import Joi from 'joi'
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '~/utils/ApiError'
+import { BOARD_TYPE } from '~/utils/constants'
 
 const createNew = async (req, res, next) => {
   const conrrectCondition = Joi.object({
@@ -13,7 +14,8 @@ const createNew = async (req, res, next) => {
       'string.max': 'Title length must be less than or equal to 5 characters long (2909ngv)',
       'string.trim': 'Title must not have leading or trailing whitespace (2909ngv)'
     }),
-    description: Joi.string().required().min(3).max(256).trim().strict()
+    description: Joi.string().required().min(3).max(256).trim().strict(),
+    type: Joi.string().valid(BOARD_TYPE.PUBLIC, BOARD_TYPE.PRIVATE).required()
   })
 
   try {
