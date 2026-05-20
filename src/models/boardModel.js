@@ -22,6 +22,9 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
   _destroy: Joi.boolean().default(false)
 })
 
+//Chi dinh cac fields khong cho phep cap trong trong update()
+const InvalidUpdateFields = ['id', 'createdAt']
+
 const validateBeforeCreate = async (data) => {
   return await BOARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })
 }
@@ -84,7 +87,25 @@ const pushColumOrderIds = async ( column ) => {
       { $push : { columnOrderIds : new ObjectId(String(column._id)) } },
       { ReturnDocument: 'after' }
     )
-    return result.value || null
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
+const update = async ( boardId, updateData ) => {
+  try {
+    Object.keys(updateData).forEach(fieldName => {
+      if (InvalidUpdateFields.includes(fieldName)) {
+        delete updateData[fieldName]
+      }
+    })
+    const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+      {
+        _id: new ObjectId(String(boardId))
+      },
+      { $set : updateData },
+      { ReturnDocument: 'after' }
+    )
+    return result
   } catch (error) { throw new Error(error) }
 }
 
@@ -94,5 +115,6 @@ export const boardModel = {
   createNew,
   findOneById,
   getDetails,
-  pushColumOrderIds
+  pushColumOrderIds, 
+  update
 }
