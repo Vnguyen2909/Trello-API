@@ -115,6 +115,6 @@ export const boardModel = {
   createNew,
   findOneById,
   getDetails,
-  pushColumOrderIds, 
+  pushColumOrderIds,
   update
 }
