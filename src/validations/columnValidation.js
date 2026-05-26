@@ -18,6 +18,23 @@ const createNew = async (req, res, next) => {
   }
 }
 
+const update = async (req, res, next) => {
+  const conrrectCondition = Joi.object({
+    title: Joi.string().min(3).max(50).trim().strict(),
+    cardOrderIds: Joi.array().items(Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)).default([])
+  })
+
+  try {
+    //Doi voi truong hop Update cho phep allowUnknown de khong can day len mot so field
+    await conrrectCondition.validateAsync(req.body, { abortEarly: false, allowUnknown : true })
+    next()
+  } catch (error) {
+    const errorMessage = new Error(error).message
+    const customError = new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, errorMessage)
+    next(customError)
+  }
+}
+
 export const columnValidation = {
-  createNew
+  createNew, update
 }
