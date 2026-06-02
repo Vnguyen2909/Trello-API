@@ -53,7 +53,7 @@ const pushCardOrderIds = async ( card ) => {
         _id: new ObjectId(String(card.cardId))
       },
       { $push : { cardOrderIds : new ObjectId(String(card._id)) } },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
     return result.value
   } catch (error) { throw new Error(error) }
@@ -76,8 +76,17 @@ const update = async ( cardId, updateData ) => {
         _id: new ObjectId(String(cardId))
       },
       { $set : updateData },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
+const deleteManyByColumnId = async (columnId) => {
+  try {
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).deleteMany({
+      columnId: new ObjectId(String(columnId))
+    })
     return result
   } catch (error) { throw new Error(error) }
 }
@@ -88,5 +97,6 @@ export const cardModel = {
   createNew,
   findOneById,
   pushCardOrderIds,
-  update
+  update,
+  deleteManyByColumnId
 }
