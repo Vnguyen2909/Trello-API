@@ -1,4 +1,4 @@
-
+import { pick } from 'lodash'
 
 export const slugify = (val) => {
   if (!val) return ''
@@ -10,4 +10,10 @@ export const slugify = (val) => {
     .replace(/[^a-z0-9 -]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+}
+
+export const pickUser = (user) => {
+  if (!user) return
+
+  return pick(user, ['_id', 'email', 'usename', 'displayName', 'avatar', 'role', 'isActive', 'verifyToken', 'createdAt', 'updatedAt'])
 }
