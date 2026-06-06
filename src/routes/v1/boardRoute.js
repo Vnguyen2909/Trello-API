@@ -2,21 +2,22 @@ import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { boardValidation } from '~/validations/boardValidation'
 import { boardController } from '~/controllers/boardController'
+import { authMiddleware } from '~/middlewares/authMiddleware'
 
 const Router = express.Router()
 
 Router.route('/')
-  .get((req, res) => {
+  .get(authMiddleware.isAuthorized, (req, res) => {
     res.status(StatusCodes.OK).json({ message: 'Note: API get list boards' })
   })
-  .post(boardValidation.createNew, boardController.createNew)
+  .post(authMiddleware.isAuthorized, boardValidation.createNew, boardController.createNew)
 
 Router.route('/:id')
-  .get(boardController.getDetails)
-  .put(boardController.update, boardController.update) //update
+  .get(authMiddleware.isAuthorized, boardController.getDetails)
+  .put(authMiddleware.isAuthorized, boardController.update, boardController.update) //update
 
 //API ho tro cho viec di chuyen card giua cac colum khac nhau
 Router.route('/supports/moving_cards')
-  .put(boardValidation.moveCardToDifferentColumn, boardController.moveCardToDifferentColumn)
+  .put(authMiddleware.isAuthorized, boardValidation.moveCardToDifferentColumn, boardController.moveCardToDifferentColumn)
 
 export const boardRouters = Router
