@@ -7,10 +7,18 @@ import { APIs_v1 } from '~/routes/v1'
 import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware'
 import { corsOptions } from '~/config/cors'
+import cookieParser from 'cookie-parser'
 
 const START_SERVER = () => {
   const app = express()
+  //Fix Cache from disk cua ExpressJS
+  app.use((req, res, next) => {
+    res.set('Cache-control', 'no-store')
+    next()
+  })
 
+  //Cau hinh CookieParser
+  app.use(cookieParser())
   //Xu ly CORS
   app.use(cors(corsOptions))
 
@@ -44,12 +52,4 @@ const START_SERVER = () => {
     process.exit(0)
   }
 })()
-
-// CONNECT_DB()
-//   .then(() => console.log('Connected to MongoDB Cloud Atlas'))
-//   .then(() => START_SERVER())
-//   .catch(error => {
-//     console.error(error),
-//     process.exit(0)
-//   })
 
