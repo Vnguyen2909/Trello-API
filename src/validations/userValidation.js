@@ -45,6 +45,24 @@ const login = async (req, res, next) => {
   }
 }
 
+const update = async (req, res, next) => {
+  const conrrectCondition = Joi.object({
+    displayName: Joi.string().trim().strict(),
+    current_password: Joi.string().pattern(PASSWORD_RULE).message(`current_password, ${PASSWORD_RULE_MESSAGE}`),
+    new_password: Joi.string().pattern(PASSWORD_RULE).message(`new_password, ${PASSWORD_RULE_MESSAGE}`)
+  })
+
+  try {
+    //Doi voi truong hop Update cho phep allowUnknown de khong can day len mot so field
+    await conrrectCondition.validateAsync(req.body, { abortEarly: false, allowUnknown : true })
+    next()
+  } catch (error) {
+    const errorMessage = new Error(error).message
+    const customError = new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, errorMessage)
+    next(customError)
+  }
+}
+
 export const userValidation = {
-  createNew, verifyAccount, login
+  createNew, verifyAccount, login, update
 }
