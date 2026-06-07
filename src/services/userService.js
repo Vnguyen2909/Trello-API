@@ -9,6 +9,7 @@ import { WEBSITE_DOMAIN } from '~/utils/constants'
 import { BrevoProvider } from '~/providers/BrevoProvider'
 import { env } from '~/config/environment'
 import { JwtProvider } from '~/providers/JwtProvider'
+import { cloudinaryProvider } from '~/providers/CloudinaryProvider'
 
 const createNew = async (reqbody) => {
   try {
@@ -119,6 +120,41 @@ const refreshToken = async (clientRefreshToken) => {
   } catch (error) { throw error }
 }
 
+const update = async (userId, reqbody, userAvatarFile) => {
+  try {
+  //Query User va kiem tra chac chan
+    const exitsUser = await userModel.findOneById(userId)
+    if (!exitsUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found')
+    if (!exitsUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not active')
+
+    let updatedUser = {}
+
+    //Truong hop change password
+    if (reqbody.current_password && reqbody.new_password) {
+      //Kiem tra xem curren_password
+      if (!bcryptjs.compareSync(reqbody.current_password, exitsUser.password)) {
+        throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your current password is incorrect!')
+      }
+      //Neu curren_password dung Hash new_password vao Database
+      updatedUser = await userModel.update(userId, {
+        password: bcryptjs.hashSync(reqbody.new_password, 8)
+      })
+    } else if (userAvatarFile) {
+      //Truong hop upload file len Cloud Storage
+      const uploadResult = await cloudinaryProvider.streamUpload(userAvatarFile.buffer, 'users')
+
+      //Luu lai url(secure_url) cua file anh vao trong Database
+      updatedUser = await userModel.update(userId, {
+        avatar: uploadResult.secure_url
+      })
+    } else {
+      updatedUser = await userModel.update(userId, reqbody)
+    }
+
+    return pickUser(updatedUser)
+  } catch (error) { throw error }
+}
+
 export const userService = {
-  createNew, verifyAccount, login, refreshToken
+  createNew, verifyAccount, login, refreshToken, update
 }
