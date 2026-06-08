@@ -4,12 +4,12 @@ import { slugify } from '~/utils/formatter'
 import { boardModel } from '~/models/boardModel'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
-import { cloneDeep, result } from 'lodash'
+import { cloneDeep } from 'lodash'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
 import { DEFAULT_PAGE, DEFAULT_ITEM_PER_PAGE } from '~/utils/constants'
 
-const createNew = async (reqbody) => {
+const createNew = async (userId, reqbody) => {
   try {
     // Xu ly logic du lieu tuy dac thu du an
     const newBoard = {
@@ -18,7 +18,7 @@ const createNew = async (reqbody) => {
     }
 
     // Goi toi tang Model de xu ly ban ghi newBoard vao trong Database
-    const createdBoard = await boardModel.createNew(newBoard)
+    const createdBoard = await boardModel.createNew(userId, newBoard)
 
     //Lay ban ghi board sau khi goi
     const getNewBoard = await boardModel.findOneById(createdBoard.insertedId)
@@ -28,9 +28,9 @@ const createNew = async (reqbody) => {
   } catch (error) { throw error }
 }
 
-const getDetails = async (boardId) => {
+const getDetails = async (userId, boardId) => {
   try {
-    const board = await boardModel.getDetails(boardId)
+    const board = await boardModel.getDetails(userId, boardId)
     if (!board) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found!')
     }
