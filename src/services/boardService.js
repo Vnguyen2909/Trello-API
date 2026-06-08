@@ -4,9 +4,10 @@ import { slugify } from '~/utils/formatter'
 import { boardModel } from '~/models/boardModel'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, result } from 'lodash'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { DEFAULT_PAGE, DEFAULT_ITEM_PER_PAGE } from '~/utils/constants'
 
 const createNew = async (reqbody) => {
   try {
@@ -81,6 +82,16 @@ const moveCardToDifferentColumn = async (reqBody) => {
   } catch (error) { throw error }
 }
 
+const getBoards = async (userId, page, ItemsPerPage) => {
+  try {
+    if (!page) page = DEFAULT_PAGE
+    if (!ItemsPerPage) ItemsPerPage = DEFAULT_ITEM_PER_PAGE
+
+    const result = await boardModel.getBoards(userId, parseInt(page, 10), parseInt(ItemsPerPage, 10))
+    return result
+  } catch (error) { throw error }
+}
+
 export const boardService = {
-  createNew, getDetails, update, moveCardToDifferentColumn
+  createNew, getDetails, update, moveCardToDifferentColumn, getBoards
 }

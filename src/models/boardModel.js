@@ -6,6 +6,7 @@ import { GET_DB } from '~/config/mongodb'
 import { BOARD_TYPE } from '~/utils/constants'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { pagingSkipValue } from '~/utils/algorithms'
 
 //Define Collection (Name & Schema)
 const BOARD_COLLECTION_NAME = 'boards'
@@ -16,6 +17,10 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
   type: Joi.string().valid(BOARD_TYPE.PUBLIC, BOARD_TYPE.PRIVATE).required(),
 
   columnOrderIds: Joi.array().items(Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)).default([]),
+  //Nhung Admin cua Boards
+  ownerIds: Joi.array().items(Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)).default([]),
+  //Thanh vien cua Boards
+  memnberIds: Joi.array().items(Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)).default([]),
 
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),
@@ -128,6 +133,44 @@ const pullColumOrderIds = async ( column ) => {
   } catch (error) { throw new Error(error) }
 }
 
+const getBoards = async (userId, page, itemsPerPage) => {
+  try {
+    const queryConditions = [
+      //Dieu kien 01: Board chua bi xoa
+      { _destroy: false },
+      //Dieu kien 02: UserId dang thuc hien phai thuoc memberIds hoac ownerIds cuar Board
+      { $or: [
+        { ownerIds: { $all: [new ObjectId(String(userId))] } },
+        { memberIds: { $all: [new ObjectId(String(userId))] } }
+      ] }
+    ]
+
+    const query = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate([
+      { $match: { $and: queryConditions } },
+      //sort title cua Board theo A-Z
+      { $sort: { title: 1 } },
+      //Xu ly nhieu luong trong 1 query
+      { $facet: {
+        //Luong thu nhat: query Boards
+        'queryBoards' : [
+          //Bo qua so luong ban ghi cua nhung page truoc do
+          { $skip: pagingSkipValue(page, itemsPerPage) },
+          //Gioi han toi da so luong ban ghi tra ve tren 1 Page
+          { $limit: itemsPerPage }
+        ],
+        //Luong thu hai: dem tong so luong ban ghi Board trong Database
+        'queryTotalBoards' : [{ $count: 'countedAllBoards' }]
+      } }
+    ], { collation: { locale: 'en' } }).toArray()
+
+    const res = query[0]
+    return {
+      boards: res.queryBoards || [],
+      totalBoards: res.queryTotalBoards[0]?.countedAllBoards || 0
+    }
+  } catch (error) { throw new Error(error) }
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
@@ -136,5 +179,6 @@ export const boardModel = {
   getDetails,
   pushColumOrderIds,
   update,
-  pullColumOrderIds
+  pullColumOrderIds,
+  getBoards
 }
