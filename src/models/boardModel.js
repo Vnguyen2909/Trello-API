@@ -6,7 +6,9 @@ import { GET_DB } from '~/config/mongodb'
 import { BOARD_TYPE } from '~/utils/constants'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { userModel } from './userModel'
 import { pagingSkipValue } from '~/utils/algorithms'
+
 
 //Define Collection (Name & Schema)
 const BOARD_COLLECTION_NAME = 'boards'
@@ -39,7 +41,8 @@ const createNew = async (userId, data) => {
     const validData = await validateBeforeCreate(data)
     const newBoardToAdd = {
       ...validData,
-      ownerIds: [new ObjectId(String(userId))]
+      ownerIds: [new ObjectId(String(userId))],
+      memberIds: [new ObjectId(String(userId))]
     }
 
     const createdBoard = await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(newBoardToAdd)
@@ -86,8 +89,29 @@ const getDetails = async (userId, boardId) => {
           foreignField: 'boardId',
           as: 'cards'
         }
+      },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'ownerIds',
+          foreignField: '_id',
+          as: 'owners',
+          //pipeline: xu ly mot hoac nhieu luong
+          //$project: chi dinh vai field khong muon lay ve bang cach gan no gia tri 0
+          pipeline: [{ $project: { 'password': 0, 'verifyToken': 0 } }]
+        }
+      },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'memberIds',
+          foreignField: '_id',
+          as: 'members',
+          pipeline: [{ $project: { 'password': 0, 'verifyToken': 0 } }]
+        }
       }
     ]).toArray()
+
     return result[0]
   } catch (error) { throw new Error(error) }
 }
