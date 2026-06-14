@@ -22,7 +22,7 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
   //Nhung Admin cua Boards
   ownerIds: Joi.array().items(Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)).default([]),
   //Thanh vien cua Boards
-  memnberIds: Joi.array().items(Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)).default([]),
+  memberIds: Joi.array().items(Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)).default([]),
 
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),
@@ -205,6 +205,20 @@ const getBoards = async (userId, page, itemsPerPage) => {
   } catch (error) { throw new Error(error) }
 }
 
+//Push gia tri userId vao cuoi mang MemberIds
+const pushMemberIds = async ( boardId, userId ) => {
+  try {
+    const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+      {
+        _id: new ObjectId(String(boardId))
+      },
+      { $push : { memberIds : new ObjectId(String(userId)) } },
+      { returnDocument: 'after' }
+    )
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
@@ -214,5 +228,6 @@ export const boardModel = {
   pushColumOrderIds,
   update,
   pullColumOrderIds,
-  getBoards
+  getBoards,
+  pushMemberIds
 }

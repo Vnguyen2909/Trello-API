@@ -3,6 +3,8 @@ import { GET_DB } from '~/config/mongodb'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 import { INVITATION_TYPES, BOARD_INVITATION_STATUS } from '~/utils/constants'
 import Joi from 'joi'
+import { userModel } from './userModel'
+import { boardModel } from './boardModel'
 
 const INVITATION_COLLECTION_NAME = 'invitations'
 const INVITATION_COLLECTION_SCHEMA = Joi.object({
@@ -32,14 +34,14 @@ const createNewBoardInvitation = async (data) => {
     //Bien doi mot so du lieu lien quan toi ObjectId chuan chinh
     let newInvitationToAdd = {
       ...validData,
-      inviterId: new ObjectId(String(validData.inviteeId)),
+      inviterId: new ObjectId(String(validData.inviterId)),
       inviteeId: new ObjectId(String(validData.inviteeId))
     }
     //Neu ton tai du lieu boardInvitation thi update cho cai BoardId
     if (validData.boardInvitation) {
       newInvitationToAdd.boardInvitation = {
         ...validData.boardInvitation,
-        boardId: new ObjectId(String(validData.boardInvitation.boardId))  
+        boardId: new ObjectId(String(validData.boardInvitation.boardId))
       }
     }
 
@@ -68,18 +70,57 @@ const update = async (invitationId, updateData) => {
     //Doi voi nhung du lieu lien quan ObjectId, bien doi o day
     if (updateData.boardInvitation) {
       updateData.boardInvitation = {
-        ...updateData.boardInvitation = {
-          boardId: new ObjectId(String(updateData.boardInvitation.boardId))
-        }
+        ...updateData.boardInvitation,
+        boardId: new ObjectId(String(updateData.boardInvitation.boardId))
       }
     }
 
-    const result = await GET_DB.collection(INVITATION_COLLECTION_NAME).findOneAndUpdate(
+    const result = await GET_DB().collection(INVITATION_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(String(invitationId)) },
       { $set: updateData },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
     return result
+  } catch (error) { throw new Error(error) }
+}
+
+const findByUser = async (userId) => {
+  try {
+    const queryConditions = [
+      { inviteeId: new ObjectId(String(userId)) },
+      { _destroy: false }
+    ]
+    const results = await GET_DB().collection(INVITATION_COLLECTION_NAME).aggregate([
+      { $match: { $and: queryConditions } },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'inviterId',
+          foreignField: '_id',
+          as: 'inviter',
+          pipeline: [{ $project: { 'password': 0, 'verifyToken': 0 } }]
+        }
+      },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'inviteeId',
+          foreignField: '_id',
+          as: 'invitee',
+          pipeline: [{ $project: { 'password': 0, 'verifyToken': 0 } }]
+        }
+      },
+      {
+        $lookup: {
+          from: boardModel.BOARD_COLLECTION_NAME,
+          //Thong tin cua Board
+          localField: 'boardInvitation.boardId',
+          foreignField: '_id',
+          as: 'board'
+        }
+      }
+    ]).toArray()
+    return results
   } catch (error) { throw new Error(error) }
 }
 
@@ -88,5 +129,6 @@ export const invitationModel = {
   INVITATION_COLLECTION_SCHEMA,
   createNewBoardInvitation,
   findOneById,
-  update
+  update,
+  findByUser
 }
