@@ -8,6 +8,9 @@ import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware'
 import { corsOptions } from '~/config/cors'
 import cookieParser from 'cookie-parser'
+import socketIo from 'socket.io'
+import http from 'http'
+import { inviteUserToBoardSocket } from '~/sockets/inviteUserToBoardSocket'
 
 const START_SERVER = () => {
   const app = express()
@@ -31,9 +34,25 @@ const START_SERVER = () => {
   //Middleware xu ly loi tap trung
   app.use(errorHandlingMiddleware)
 
-  app.listen(env.APP_PORT, env.APP_HOST, () => {
-    console.log(`Hi ${env.AUTHOR} - Back-end is running successfully at Host and Port: http://${ env.APP_HOST }:${ env.APP_PORT }/`)
+  //Tao sever moi boc App cua Express de lam realtime SocketIo
+  const server = http.createServer(app)
+  //Khoi tao bien io voi sever va cors
+  const io = socketIo(server, { cors: corsOptions })
+  io.on('connection', (socket) => {
+    inviteUserToBoardSocket(socket)
   })
+
+  //Moi truong Production
+  if (env.BUILD_MODE === 'production') {
+    server.listen(env.APP_PORT, env.APP_HOST, () => {
+      console.log(`Production - Hi ${env.AUTHOR} - Back-end is running successfully at Host and Port: http://${ env.APP_HOST }:${ env.APP_PORT }/`)
+    })
+  } else {
+    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+      console.log(`Local Dev - Hi ${env.AUTHOR} - Back-end is running successfully at Host and Port: http://${ env.LOCAL_DEV_APP_HOST }:${ env.LOCAL_DEV_APP_PORT }/`)
+    })
+  }
+
   exitHook(() => {
     console.log('Server is shutting down...')
     CLOSE_DB()

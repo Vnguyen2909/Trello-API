@@ -124,7 +124,7 @@ const pushColumOrderIds = async ( column ) => {
         _id: new ObjectId(String(column.boardId))
       },
       { $push : { columnOrderIds : new ObjectId(String(column._id)) } },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
     return result
   } catch (error) { throw new Error(error) }
@@ -147,7 +147,7 @@ const update = async ( boardId, updateData ) => {
         _id: new ObjectId(String(boardId))
       },
       { $set : updateData },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
     return result
   } catch (error) { throw new Error(error) }
@@ -161,7 +161,7 @@ const pullColumOrderIds = async ( column ) => {
         _id: new ObjectId(String(column.boardId))
       },
       { $pull : { columnOrderIds : new ObjectId(String(column._id)) } },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
     return result
   } catch (error) { throw new Error(error) }
