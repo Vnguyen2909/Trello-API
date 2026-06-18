@@ -167,7 +167,7 @@ const pullColumOrderIds = async ( column ) => {
   } catch (error) { throw new Error(error) }
 }
 
-const getBoards = async (userId, page, itemsPerPage) => {
+const getBoards = async (userId, page, itemsPerPage, queryFilters) => {
   try {
     const queryConditions = [
       //Dieu kien 01: Board chua bi xoa
@@ -178,6 +178,17 @@ const getBoards = async (userId, page, itemsPerPage) => {
         { memberIds: { $all: [new ObjectId(String(userId))] } }
       ] }
     ]
+
+    //Xu ly queryFilters cho tung truong hop SearchBoard
+    if (queryFilters) {
+      Object.keys(queryFilters).forEach(key => {
+        //Co phan biet chu hoa chu thuong
+        // queryConditions.push({ [key]: { $regex: queryFilters[key] } })
+
+        //Khong phan biet chu hoa chu thuong
+        queryConditions.push({ [key]: { $regex: new RegExp(queryFilters[key], 'i') } })
+      })
+    }
 
     const query = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate([
       { $match: { $and: queryConditions } },
